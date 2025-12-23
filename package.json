@@ -1,0 +1,11 @@
+{
+  "name": "backend-project-cac",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "run": "node index.js"
+  },
+  "author": "Kapil Bagaria",
+  "license": "ISC"
+}
