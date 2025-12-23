@@ -1,0 +1,8 @@
+# konsi files me prettier implement ni krna
+/.vscode
+/node_modules
+./dist
+
+*.env
+.env
+.env*
