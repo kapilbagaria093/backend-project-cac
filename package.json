@@ -7,6 +7,12 @@
   "scripts": {
     "dev": "nodemon src/index.js"
   },
+  "keywords": [
+    "backend",
+    "javascript",
+    "express",
+    "nodejs"
+  ],
   "author": "Kapil Bagaria",
   "license": "ISC",
   "devDependencies": {
