@@ -10,7 +10,22 @@ dotenv.config({
 })
 
 // 2. ANOTHER APPROACH IS TO INITIALISE THE EXPRESS APP IN A DIFFERENT FILE AND CALL THAT FILE HERE AFTER SUCCESSFUL CONNECTION TO MONGODB DATABASE USING MONGOOSE.
+
+// connect DB is an async function. whenever a async function is executed a promise is returned.
 connectDB()
+.then (() => {
+    app.listen(process.env.PORT || 8000, () => {
+        console.log(`server is running at port: ${process.env.PORT}`)
+    });
+})
+.catch ((error) => {
+    console.log(`MongoDB connectioni failed.!!!! ${error}`);
+})
+
+// when the app has successfully connected to the database
+app.on("error", (error) => {
+    console.log("application error")
+})
 
 
 
