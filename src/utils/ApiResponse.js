@@ -7,3 +7,5 @@ class ApiResponse {
         // we are setting an errorcode standard that, 400 se neeche would be success and each type of response can have a different success code. and above 400, hum errorcode assume kr rhe hai and will deal as errors.
     }
 }
+
+export { ApiResponse }

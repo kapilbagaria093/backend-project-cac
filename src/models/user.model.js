@@ -57,7 +57,7 @@ userSchema.pre("save", async function(next){
     if(!this.isModified("password")) return next();
 
     // parameters: (what to hash, how many rounds of hashing)
-    this.password = bcrypt.hash(this.password, 10)
+    this.password = await bcrypt.hash(this.password, 10)
     next()
 })
 
@@ -104,5 +104,5 @@ userSchema.methods.generateRefreshToken = function(){
     )
 }
 
-
+// the user we have exported here is created by mongoose and is used for direct interaciton with database, wherever required we need to import this user.
 export const User = mongoose.model("User", userSchema);
