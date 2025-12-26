@@ -36,7 +36,7 @@ const registerUser = asyncHandler( async ( req, res ) => {
     // }
 
 // 3. check if user already exists: check using username, email
-    const existerUser = User.findOne({
+    const existerUser = await User.findOne({
         // crazy "or" in object
         // username and email me se jo bhi first matching milgya woh dedega
         $or: [{ username }, { email }]
@@ -51,9 +51,18 @@ const registerUser = asyncHandler( async ( req, res ) => {
     // multer gives us access to req.files
     // ? because optional chaining -- google!! -- maybe aaya ho, maybe naa aaya ho
     // avatar ki first property ke andar ek object milta hai jiske andar path hota hai jahaa pe multer ne file ko upload kiya hai, in local server (humaara public wala folder)
-    console.log(`req.files object: ${req.files}`)
-    const avatarLocalPath = req.files?.avatar[0]?.path
-    const coverImageLocalPath = req.files?.coverImage[0]?.path
+    // console.log("req.files object:", req.files)
+    const avatarLocalPath = req.files?.avatar[0]?.path;
+
+    // here we also need to check if cover image is actually made or not warna error aata hai in testing.
+    // we use a different format then there, because we arnet checking if cover image present or not later.
+    // const coverImageLocalPath = req.files?.coverImage[0]?.path;
+
+    let coverImageLocalPath;
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverImageLocalPath = req.files.coverImage[0].path;
+    }
+
 
     if (!avatarLocalPath) {
         throw new ApiError(400, "avatar required")

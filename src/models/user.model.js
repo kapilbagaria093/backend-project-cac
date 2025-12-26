@@ -54,11 +54,11 @@ const userSchema  = new Schema({
 userSchema.pre("save", async function(next){
     
     // so that, password is encrypted only when it is changes and not on every save in database. without this if statement, even is user changes his avatar the password would be encrypted again.
-    if(!this.isModified("password")) return next();
+    if(!this.isModified("password")) return; //next();
 
     // parameters: (what to hash, how many rounds of hashing)
-    this.password = await bcrypt.hash(this.password, 10)
-    next()
+    this.password = await bcrypt.hash(this.password, 10);
+    // next()
 })
 
 // we can also design custom methods in MONGOOSE.

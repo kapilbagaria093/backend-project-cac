@@ -25,8 +25,10 @@ const uploadOnCloudinary = async (localFilePath) => {
         // file upload is successful
 
         // response url means the final url of the file in the cloudinary server where it is uploaded.
-        console.log(`file uploaded successfully ${response.url}`)
-        console.log(`CLOUDINARY RESPONSE OBJECT FOR STUDY: ${response}`)
+        // console.log(`file uploaded successfully ${response.url}`)
+        // console.log(`CLOUDINARY RESPONSE OBJECT FOR STUDY: ${response}`)
+        fs.unlinkSync(localFilePath); // local server se remove hojayegi after cloudinary upload
+
         return response;
     } catch (error) {
         // if there is error while upload, we need to remove the file from our local sevrer too.
