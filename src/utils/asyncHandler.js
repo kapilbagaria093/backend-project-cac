@@ -10,7 +10,7 @@
 const asyncHandler = (requestHandler) => {
 
     // the parameters req, res, next are passed to the inner function from express when the function is executed as a middleware.
-    (req, res, next) => {
+    return (req, res, next) => {
         Promise.resolve(requestHandler(req, res, next))
         .catch((error) => next(error))
     }

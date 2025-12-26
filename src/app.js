@@ -21,11 +21,25 @@ app.use(express.urlencoded({extended: true, limit: "16kb"}))
 app.use(express.static("public"))
 
 // cookie parser for cookies CRUD
-app.use(cookieParser)
+app.use(cookieParser())
 // -----------------------------------------------------------------------------------------------------------------------
 
 
 
+// routes import
+// whatever is exported as default in user.routes.js will be imported here and used as "userRouter"
+import userRouter from "./routes/user.routes.js"
+
+// routes declaration
+// in the start, we directly did "app.get" and defined routes and endpoints, because we were doing everything at same plae, by writing middlewares and controllers everything there itself. but because we have not separated stuff, we need to use this import configuration and do things systematically.
+
+// app.use("/users", userRouter) // we can use this directly but it is standard practice to put some stuff in url like, "api", "version", etc.
+// so we do:
+app.use("/api/v1/users", userRouter)
+
+// now: http://localhost:8000/api/v1/users/...{all routes related to user will be now defined in the user.routes.js as that file is given control now.}
+
+// now, if we go to "/users", it gives the control to userRouter and ab kya krna hai is defined in userRouter file (user.routes.json).
 
 
 export { app };

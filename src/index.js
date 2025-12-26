@@ -1,5 +1,6 @@
 // require('dotenv').config({path: './.env'}); // not consistent with our codebase
 import dotenv from "dotenv";
+import { app } from "./app.js"
 
 // import mongoose, { Error } from 'mongoose';
 // import { DB_NAME } from './constants';
