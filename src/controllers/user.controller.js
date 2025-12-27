@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 
 // lets make a new method which generates access and refresh tokens together, so we dont have to write code in middle of loginUser controller.
@@ -303,7 +304,7 @@ const changeCurrentPassword = asyncHandler( async (req, res) => {
 const getCurrentUser = asyncHandler( async ( req, res) => {
     return res
     .status(200)
-    .json( 200, req.user, "current user fetched successfully")
+    .json( new ApiResponse(200, req.user, "current user fetched successfully"))
 })
 
 const updateAccountDetails = asyncHandler( async(req, res) => {
@@ -382,6 +383,153 @@ const updateUserCoverImage = asyncHandler( async(req,res)=>{
 
 }) 
 
+const getUserChannelProfile = asyncHandler( async(req,res)=> {
+    // hum ek username (channel name) input kar rahe hai, and usse related info nikaal rhe hai database me se, taaki we can show all that stuff in the frontend
+    const {username} = req.params // kyuki url ka parameter hota hai channel normally, ex, youtube.com/kapilbagaria
+
+    if (!username?.trim()) {
+        throw new ApiError(400, "username is missing")
+    }
+
+    // aggregation pipelines se array return hoti hai
+    const channel = await User.aggregate(
+        // we write an aggregation pipeline in an array inside which each object defines a state.
+        [
+            {
+                $match: {
+                    username: username?.toLowerCase()
+                }
+            },
+            {
+                $lookup: {
+                    from: "subscriptions", // mongo db me aise hie stored hai 
+                    localField: "_id",
+                    foreignField: "channel",
+                    as: "subscribers"
+                }
+            },
+            {
+                $lookup: {
+                    from: "subscriptions",
+                    localField: "_id",
+                    foreignField: "subscriber",
+                    as: "subscribedTo"
+                }
+            },
+            {
+                $addFields: {
+                    subscribersCount: {
+                        $size: "$subscribers" // fields ke saath dollar use hota hai
+                    },
+                    channelsSubscribedToCount: {
+                        $size: "$subscribedTo"
+                    },
+                    isSubscribed: {
+                        // condition
+                        $cond: {
+                            // agar mae chai aur code search krta hu youtube pe, toh mae chai aur code ki subscriber's list me hu ya nhi
+                            // me = req.user
+                            // chai aur code = has subscribers field, jiske andar subscriber hai
+                            if: {$in: [req.user?._id, "$subscribers.subscriber"]},
+                            then: true,
+                            else: false
+                        }
+                    }
+                }
+            },
+            {
+                // selected cheeze return krna
+                $project: {
+                    fullname: 1, // 1 for pass krdo (flag on)
+                    username: 1,
+                    subscribersCount: 1,
+                    channelsSubscribedToCount: 1,
+                    isSubscribed: 1,
+                    avatar: 1,
+                    coverImage: 1,
+                    email: 1
+                }
+            }
+        ]
+    )
+    // aggregation pipelines ek array ke andar objects return krti hai jo bhi project hui hai. 
+    // humaari yeh pipeline, runs only for one user (channel name), so the array will have only one element which we will be referring.
+
+    console.log(channel); // for study purposes
+    
+    if (!channel?.length){
+        throw new ApiError(404, "channel doesnt exist")
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(100, channel[0], "User channel fetched successfully")
+    )
+})
+
+const getWatchHistory = asyncHandler( async(req,res)=> {
+    const user = await User.aggregate([
+        {
+            $match: {
+                // _id: req.user._id
+                // this is problematic, because: in mongoDB, _id stores an entire string which looks like "Object("<entire id part>")" and every where else, we were referring to _id with mongoose which automarically converted this string to actual "id" but here, mongoose doesnt function so we will have to convert it manually using a mongoose function
+
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory",
+
+                // here we will need one more sub pipeline because: watch history se humee video ki id mil rhi hai jahaa se hum video ki information nikaal ke frontend pe display krna chaahte hai, BUT, one of the info jo humee "video" object se nikaalni hai, woh hai "owner" jo ki firse reference detaa hai ek user ka, so uske liye humee ek aur baar lookup krna padega.
+                // so: user ---> watchHistory --lookup--> video ---> owner ---lookup---> user (dusra wala jo owner hai video ka) 
+
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            // ab yaha pe, user ki boht saari info return hojayegi jo hum ni chaahte toh hum andar hie ek aur pipeline likh skte hai jo projected values ko filter out karde, if we want, we couldve written this pipeline outside also as next stage to this pipeline.
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullname: 1,
+                                        username: 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+                            // in this pipeline, owner ki field me array aagya hai, jiski first value me yeh saara projected data rahega
+                            // is array ko thoda better krne ke liye ek aur stage add krskte hai, due to which, data will be sent more graciously by the backend.
+                        }
+                    },
+                    // hum data structure thoda sa sudhaarna chaahte hai
+                    {
+                        $addFields: {
+                            // same name ki field add kari, toh existing field overwrite hojayegi
+                            owner: {
+                                $first: "$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, user[0].watchHistory, "watch history fetched successfully")
+    )
+})
+
 export {
     registerUser,
     loginUser,
@@ -392,4 +540,6 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     updateUserCoverImage,
+    getUserChannelProfile,
+    getWatchHistory,
 }
