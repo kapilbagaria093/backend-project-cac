@@ -72,6 +72,16 @@ userSchema.methods.isPasswordCorrect = async function(password){
 // JWT IS A BEARER TOKEN
 // WHOEVER HAS THIS TOKEN, WE SEND OUT DATA TO THEM.
 // ITS LIKE A DIGITAL ID CARD.
+
+// access and refresh token concept:
+// the user needs access token whenever he needs to access services of application which require authentication. (like, file upload, etc.)
+// access tokens are expired by the system in a short time for security reasons (maybe 15mins, 1 hour, 1 day, etc, depending on the system we are building). 
+// after expiry of access token user needs to authenticate again so, a new access token can be generated.
+// to avoid the user needing to login again and again, we also use refresh token.
+// a refresh token has much longer validity than an access token (10days, 30days, 1 year, etc based on system).
+// we define a endpoint which the user can hit, and on that endpoint, if the user's refresh token is same as refresh token stored in system, a new access token is generated for the user without him needing to login again.
+// this is how access and refresh tokens are used in modern systems.
+
 userSchema.methods.generateAccessToken = function(){
     // this process mostly doesnt take time, so async is not required.
     return jwt.sign(
