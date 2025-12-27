@@ -279,13 +279,117 @@ const refreshAccessToken = asyncHandler( async (req, res) => {
         throw new ApiError(401, error?.message || "invalid user token")
     }
 })
+// task: an article on refresh and access token.
 
-// an article on refresh and access token.
+const changeCurrentPassword = asyncHandler( async (req, res) => {
+    const { oldPassword, newPassword } = req.body
+    // here, a user is trying to change password, so he must be logged in, 
 
+    const user = await User.findById(req.user?._id);
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
+
+    if (!isPasswordCorrect){
+        throw new ApiError(401, "invalid old password");
+    }
+
+    user.password = newPassword;
+    await user.save({validateBeforeSave: false})
+
+    return res.status(200).json(
+        new ApiResponse(200, {}, "Password Changed Successfully")
+    )
+})
+
+const getCurrentUser = asyncHandler( async ( req, res) => {
+    return res
+    .status(200)
+    .json( 200, req.user, "current user fetched successfully")
+})
+
+const updateAccountDetails = asyncHandler( async(req, res) => {
+    const {fullname, email} = req.body
+    // advice: files change krne ke liye alag endpoint create krna easier rehta hai, warna text data redundantly chalaa jata hai and stuffs.
+
+    if (!fullname || !email){
+        throw new ApiError(400, "all fields are required")
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id, 
+        {
+            $set: {
+                // field: value (dono ka naam same hai toh ekbar likhna also works, ES6 syntax)
+                fullname: fullname,
+                email, // ekbar likho toh bhi upar jaisa hie count hota hai
+            }
+        },
+        {new: true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, user, "Account Details Updated Successfully")
+    )
+})
+
+const updateUserAvatar = asyncHandler( async(req,res)=>{
+    const avatarLocalPath = req.file?.path
+
+    if (!avatarLocalPath){
+        throw new ApiError(400, "Avatar File missing")
+    }
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath)
+
+    if (!avatar.url){
+        throw new ApiError(400, "error while uploading avatar")
+    }
+
+    const user = await User.findByIdAndUpdate(req.user?._id, {
+        $set: {
+            avatar: avatar.url
+        }
+    }, {new: true}).select("-password")
+
+    return res
+    .status(200)
+    .json( new ApiResponse(200, user, "avatar updated successfully"))
+}) 
+
+const updateUserCoverImage = asyncHandler( async(req,res)=>{
+    const coverImageLocalPath = req.file?.path
+
+    if (!coverImageLocalPath){
+        throw new ApiError(400, "coverImage File missing")
+    }
+
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+
+    if (!coverImage.url){
+        throw new ApiError(400, "error while uploading coverImage")
+    }
+
+    const user = await User.findByIdAndUpdate(req.user?._id, {
+        $set: {
+            coverImage: coverImage.url
+        }
+    }, {new: true}).select("-password")    
+
+    return res
+    .status(200)
+    .json( new ApiResponse(200, user, "cover image updated successfully"))
+
+}) 
 
 export {
     registerUser,
     loginUser,
     logoutUser,
     refreshAccessToken,
+    changeCurrentPassword,
+    getCurrentUser,
+    updateAccountDetails,
+    updateUserAvatar,
+    updateUserCoverImage,
 }
