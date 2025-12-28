@@ -27,7 +27,7 @@ router.route("/register").post(
 
 router.route("/login").post(loginUser)
 
-// secured routes
+// secured routes --------------------------------- 
 
 // verifyJWT is a middleware which adds "user" object inside the req object, so now, we can access the user using this information.
 // after this runs, it calls next() and then next thing runs which here is logoutUser.
