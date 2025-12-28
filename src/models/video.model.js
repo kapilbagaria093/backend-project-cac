@@ -40,5 +40,6 @@ const videoSchema = new Schema({
 // we need to do this before exporting the model.
 videoSchema.plugin(mongooseAggregatePaginate)
 // now we can write aggregate/paginate queries also along with normal queries like insert, etc.
+// paginate means, boht saare objects return hoskte hai db query se, toh ek baar me kahaa se kahaa tak values deni hai, and next load me kahaa se kaha tak objects dene
 
 export const Video = mongoose.model("Video", videoSchema)
